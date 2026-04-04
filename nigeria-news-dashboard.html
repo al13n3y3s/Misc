@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NaijaToday — Nigerian News Aggregator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green:#008751;--green-dark:#005c38;--green-light:#00b36a;
+    --gold:#c8971a;--gold-light:#f0b429;
+    --white:#faf8f4;--off-white:#f0ece3;
+    --ink:#1a1510;--ink-light:#6b5e4e;--ink-faint:#a89880;
+    --rule:#d4c8b8;--card:#ffffff;
+    --shadow:0 2px 12px rgba(0,0,0,.07);--shadow-h:0 8px 28px rgba(0,0,0,.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Source Serif 4',Georgia,serif;background:var(--white);color:var(--ink);min-height:100vh}
+
+  /* MASTHEAD */
+  .mast{background:var(--ink);border-bottom:3px solid var(--green);position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.35)}
+  .mast-in{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:12px;min-height:60px}
+  .brand{display:flex;align-items:baseline;gap:8px;flex-shrink:0}
+  .brand-name{font-family:'Playfair Display',serif;font-size:clamp(1.25rem,3vw,1.75rem);font-weight:900;letter-spacing:-.02em;color:var(--white);line-height:1}
+  .brand-name span{color:var(--gold-light)}
+  .brand-sub{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--ink-faint);letter-spacing:.12em;text-transform:uppercase;display:none}
+  @media(min-width:500px){.brand-sub{display:block}}
+  .ticker{flex:1;overflow:hidden;display:flex;align-items:center;gap:8px;min-width:0}
+  .ticker-lbl{font-family:'JetBrains Mono',monospace;font-size:.59rem;letter-spacing:.1em;text-transform:uppercase;color:var(--green-light);background:rgba(0,135,81,.18);padding:3px 8px;border-radius:3px;flex-shrink:0}
+  .ticker-txt{font-size:.75rem;font-style:italic;color:rgba(250,248,244,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:none}
+  @media(min-width:600px){.ticker-txt{display:block}}
+  .mast-r{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto}
+  .live-dot{width:7px;height:7px;background:var(--green-light);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.5)}}
+  .clock{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--ink-faint);white-space:nowrap}
+
+  /* FILTER */
+  .fbar{background:var(--off-white);border-bottom:1px solid var(--rule);padding:0 20px}
+  .fbar-in{max-width:1280px;margin:0 auto;display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;padding:9px 0;-webkit-overflow-scrolling:touch}
+  .fbar-in::-webkit-scrollbar{display:none}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 13px;border-radius:20px;border:1.5px solid var(--rule);background:var(--card);color:var(--ink-light);cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0}
+  .pill:hover{border-color:var(--green);color:var(--green-dark)}
+  .pill.on{background:var(--green);border-color:var(--green);color:#fff}
+
+  /* LAYOUT */
+  .layout{max-width:1280px;margin:0 auto;padding:26px 20px 60px;display:grid;grid-template-columns:1fr;gap:34px}
+  @media(min-width:1020px){.layout{grid-template-columns:minmax(0,2fr) 350px;gap:38px}}
+
+  /* SEC HEAD */
+  .sec-hd{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:16px;border-bottom:2px solid var(--ink);gap:10px;flex-wrap:wrap}
+  .sec-title{font-family:'Playfair Display',serif;font-size:clamp(1.05rem,2.5vw,1.35rem);font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .sec-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .cnt{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--ink-faint);white-space:nowrap}
+
+  /* SEARCH */
+  .srch{position:relative}
+  .srch input{font-family:'Source Serif 4',serif;font-size:.79rem;padding:6px 11px 6px 28px;border-radius:20px;border:1.5px solid var(--rule);background:var(--card);color:var(--ink);outline:none;transition:border-color .15s;width:185px}
+  @media(max-width:479px){.srch input{width:135px}}
+  .srch input:focus{border-color:var(--green)}
+  .srch svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--ink-faint);pointer-events:none}
+
+  /* REFRESH */
+  .rbtn{font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;background:var(--green);color:#fff;border:none;border-radius:6px;padding:8px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s,transform .1s;flex-shrink:0}
+  .rbtn:hover{background:var(--green-dark)}
+  .rbtn:active{transform:scale(.97)}
+  .rbtn:disabled{opacity:.55;cursor:not-allowed}
+  .rbtn svg{width:13px;height:13px}
+  .rbtn.spin svg{animation:spn .7s linear infinite}
+  @keyframes spn{to{transform:rotate(360deg)}}
+
+  /* LOADER */
+  .loader{text-align:center;padding:38px 20px;font-family:'JetBrains Mono',monospace;font-size:.76rem;letter-spacing:.06em;color:var(--ink-light);display:flex;flex-direction:column;align-items:center;gap:13px}
+  .sp{width:28px;height:28px;border:3px solid var(--rule);border-top-color:var(--green);border-radius:50%;animation:spn .75s linear infinite}
+  .pgwrap{width:170px;height:3px;background:var(--rule);border-radius:2px;overflow:hidden}
+  .pgfill{height:100%;background:var(--green);border-radius:2px;transition:width .35s ease}
+
+  /* STATS */
+  .stats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:15px}
+  .spill{font-family:'JetBrains Mono',monospace;font-size:.59rem;letter-spacing:.05em;color:var(--ink-light);background:var(--card);border:1px solid var(--rule);padding:3px 9px;border-radius:20px}
+  .spill strong{color:var(--green-dark)}
+
+  /* ERROR */
+  .err{background:#fff5f5;border:1.5px solid #fca5a5;border-radius:8px;padding:13px 17px;color:#991b1b;font-size:.8rem;display:none;margin-bottom:13px;line-height:1.6}
+  .err.on{display:block}
+
+  /* GRID */
+  .grid{display:grid;gap:15px;grid-template-columns:1fr}
+  @media(min-width:600px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1020px){.grid{grid-template-columns:1fr}}
+  @media(min-width:1120px){.grid{grid-template-columns:repeat(2,1fr)}}
+
+  /* CARD */
+  .card{background:var(--card);border-radius:10px;border:1.5px solid var(--rule);padding:15px 17px 13px;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow);transition:box-shadow .2s,transform .2s,border-color .2s;animation:fu .35s ease both}
+  @keyframes fu{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}
+  .card:hover{box-shadow:var(--shadow-h);transform:translateY(-2px);border-color:var(--green)}
+  .card.top{grid-column:1/-1;border-top:4px solid var(--green)}
+  .cmeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .ctag{font-family:'JetBrains Mono',monospace;font-size:.57rem;letter-spacing:.1em;text-transform:uppercase;background:#e8f5ee;color:var(--green-dark);padding:2px 7px;border-radius:4px;font-weight:500}
+  .stag{font-family:'JetBrains Mono',monospace;font-size:.59rem;color:var(--ink-faint)}
+  .ttag{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--ink-faint);margin-left:auto}
+  .chl{font-family:'Playfair Display',serif;font-size:clamp(.87rem,1.8vw,1rem);font-weight:700;line-height:1.36;color:var(--ink);letter-spacing:-.01em}
+  .card.top .chl{font-size:clamp(1rem,2.2vw,1.22rem)}
+  .csum{font-size:.79rem;line-height:1.63;color:var(--ink-light);font-style:italic;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .cft{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:6px;border-top:1px solid var(--rule);margin-top:auto}
+  .rlink{font-family:'JetBrains Mono',monospace;font-size:.61rem;letter-spacing:.07em;text-transform:uppercase;color:var(--green-dark);text-decoration:none;display:flex;align-items:center;gap:4px;transition:color .12s,gap .12s}
+  .rlink:hover{color:var(--green);gap:8px}
+  .rlink svg{width:11px;height:11px}
+  .dbadge{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--ink-faint);background:var(--off-white);border:1px solid var(--rule);padding:2px 7px;border-radius:4px;cursor:help}
+  .empty{grid-column:1/-1;text-align:center;padding:42px 20px;color:var(--ink-faint);font-size:.87rem;font-style:italic}
+
+  /* SIDEBAR */
+  .sidebar{display:flex;flex-direction:column;gap:18px}
+  .icard{background:#f5f0e8;border-radius:10px;border:1.5px solid var(--rule);overflow:hidden;box-shadow:var(--shadow)}
+  .ihd{background:var(--ink);padding:11px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ititle{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:700;color:var(--white);display:flex;align-items:center;gap:7px}
+  .icnt{font-family:'JetBrains Mono',monospace;font-size:.59rem;color:var(--ink-faint)}
+  .ilist{max-height:550px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+  .iitem{padding:12px 15px;border-bottom:1px solid var(--rule);transition:background .13s;animation:fu .35s ease both}
+  .iitem:last-child{border-bottom:none}
+  .iitem:hover{background:rgba(0,0,0,.03)}
+  .ireg{font-family:'JetBrains Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+  .ihl{font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;line-height:1.34;color:var(--ink);margin-bottom:4px}
+  .isum{font-size:.72rem;color:var(--ink-light);line-height:1.55;font-style:italic;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ift{display:flex;align-items:center;gap:7px}
+  .isrc{font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--ink-faint);flex:1}
+
+  /* FOOTER */
+  .foot{background:var(--ink);color:var(--ink-faint);text-align:center;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:.61rem;letter-spacing:.08em;border-top:3px solid var(--green);line-height:1.75}
+
+  @media(max-width:479px){.layout{padding:15px 12px 38px}.card{padding:12px 12px 10px}}
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="mast-in">
+    <div class="brand">
+      <div class="brand-name">Naija<span>Today</span></div>
+      <div class="brand-sub">Live Feed</div>
+    </div>
+    <div class="ticker">
+      <span class="ticker-lbl">Live</span>
+      <div class="ticker-txt" id="ticker">Loading…</div>
+    </div>
+    <div class="mast-r">
+      <div class="live-dot"></div>
+      <div class="clock" id="clock">—</div>
+    </div>
+  </div>
+</header>
+
+<nav class="fbar">
+  <div class="fbar-in">
+    <button class="pill on" data-cat="all">All</button>
+    <button class="pill" data-cat="politics">Politics</button>
+    <button class="pill" data-cat="economy">Economy</button>
+    <button class="pill" data-cat="security">Security</button>
+    <button class="pill" data-cat="health">Health</button>
+    <button class="pill" data-cat="technology">Tech</button>
+    <button class="pill" data-cat="sports">Sports</button>
+    <button class="pill" data-cat="education">Education</button>
+    <button class="pill" data-cat="society">Society</button>
+  </div>
+</nav>
+
+<main class="layout">
+  <div>
+    <div class="sec-hd">
+      <div class="sec-title">🇳🇬 Nigeria News</div>
+      <div class="sec-meta">
+        <div class="srch">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="srch" type="text" placeholder="Search stories…">
+        </div>
+        <span class="cnt" id="ngCnt">—</span>
+        <button class="rbtn" id="rbtn" onclick="loadAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="err" id="err"></div>
+    <div class="stats" id="stats" style="display:none"></div>
+    <div class="loader" id="ngLd">
+      <div class="sp"></div>
+      <div id="ldMsg">Fetching Nigerian news…</div>
+      <div class="pgwrap"><div class="pgfill" id="pg" style="width:0%"></div></div>
+    </div>
+    <div class="grid" id="ngGrid"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="icard">
+      <div class="ihd">
+        <div class="ititle">🌍 World News</div>
+        <span class="icnt" id="iCnt">—</span>
+      </div>
+      <div class="loader" id="iLd" style="padding:20px;background:#f5f0e8">
+        <div class="sp"></div>
+        <div style="font-size:.69rem">Fetching international…</div>
+      </div>
+      <div class="ilist" id="iList"></div>
+    </div>
+  </aside>
+</main>
+
+<footer class="foot">
+  NaijaToday &nbsp;·&nbsp; Punch · Vanguard · Guardian NG · Channels TV · Premium Times · BusinessDay · Daily Trust · The Nation · ICIR<br>
+  World: BBC Africa · Al Jazeera · Reuters · AP · NY Times &nbsp;·&nbsp; Powered by RSS Feeds
+</footer>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────
+const R2J = 'https://api.rss2json.com/v1/api.json?rss_url=';
+
+const NG = [
+  {url:'https://punchng.com/feed/',            src:'Punch'},
+  {url:'https://www.vanguardngr.com/feed/',    src:'Vanguard'},
+  {url:'https://guardian.ng/feed/',            src:'Guardian NG'},
+  {url:'https://www.channelstv.com/feed/',     src:'Channels TV'},
+  {url:'https://www.premiumtimesng.com/feed',  src:'Premium Times'},
+  {url:'https://businessday.ng/feed/',         src:'BusinessDay'},
+  {url:'https://dailytrust.com/feed/',         src:'Daily Trust'},
+  {url:'https://thenationonlineng.net/feed/',  src:'The Nation'},
+  {url:'https://www.icirnigeria.org/feed/',    src:'ICIR Nigeria'},
+];
+
+const INTL = [
+  {url:'https://feeds.bbci.co.uk/news/world/africa/rss.xml', src:'BBC Africa',   reg:'Africa'},
+  {url:'https://www.aljazeera.com/xml/rss/all.xml',          src:'Al Jazeera',   reg:'Global'},
+  {url:'https://feeds.reuters.com/reuters/worldNews',        src:'Reuters',      reg:'Global'},
+  {url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml', src:'NY Times', reg:'Global'},
+  {url:'https://feeds.bbci.co.uk/news/business/rss.xml',    src:'BBC Business', reg:'Economy'},
+  {url:'https://apnews.com/apf-intlnews.rss',                src:'AP News',      reg:'Global'},
+];
+
+// ─── CATEGORIES ──────────────────────────────────────────────────────
+const KW = {
+  politics:['president','senate','representatives','minister','governor','election','aso rock','vote','political','government','party','legislature','lawmaker','tinubu','atiku','tribunal','inauguration','cabinet','national assembly','presidency','politician','ruling','commissioner','state house'],
+  economy:['naira','economy','gdp','inflation','cbn','budget','oil','gas','revenue','tax','trade','import','export','market','stock exchange','bank','interest rate','forex','investment','debt','fiscal','monetary','billion','million','unemployment','growth','recession','dollar','exchange rate','fuel','subsidy','business','finance'],
+  security:['army','military','police','boko haram','bandits','kidnap','attack','bomb','soldier','terrorism','insurgency','security','abduction','gunmen','troops','massacre','shooting','violence','crime','robbery','ransom','hostage','separatist','ipob','iswap','banditry','abducted'],
+  health:['hospital','health','disease','covid','malaria','cholera','epidemic','vaccine','surgery','doctor','nurse','ministry of health','pharma','drug','treatment','outbreak','who','patient','medical','clinic','cancer','hiv','aids','polio','monkeypox'],
+  technology:['tech','startup','digital','internet','5g','software','app','fintech','ai','artificial intelligence','blockchain','crypto','satellite','innovation','data','cybersecurity','broadband','mobile','telecoms','mtn','airtel','glo','silicon','coding','drone'],
+  sports:['football','soccer','super eagles','npfl','nff','afcon','world cup','premier league','champions league','transfer','match','goal','stadium','athlete','olympic','sports','wrestling','boxing','track','basketball','tennis','volleyball','coach','player','score','league','cup','wta'],
+  education:['school','university','student','jamb','waec','neco','professor','academic','education','learning','teacher','classroom','campus','scholarship','polytechnic','college','asuu','strike','curriculum','graduation','degree','faculty'],
+  society:['community','culture','religion','church','mosque','tradition','festival','entertainment','music','nollywood','celebrity','fashion','food','market','youth','women','children','family','poverty','housing','transport','traffic','flood','environment','climate','protest','rally','social','gender','rights'],
+};
+
+function cat(txt){
+  const t = txt.toLowerCase();
+  let best='society', top=0;
+  for(const[k,ws]of Object.entries(KW)){const s=ws.filter(w=>t.includes(w)).length;if(s>top){top=s;best=k}}
+  return best;
+}
+
+// ─── DEDUP ───────────────────────────────────────────────────────────
+const STOP = new Set(['the','a','an','of','in','at','for','to','on','is','are','was','were','has','have','by','with','and','or','from','that','this','it','be','as','its','he','she','they','we','you','but','not','after','over','into','about','says','said','will','how','what','when','where','who','its','more','than','been','also','their','which','those','these']);
+
+function tok(s){return s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(w=>w.length>3&&!STOP.has(w))}
+
+function jacc(a,b){
+  const sa=new Set(tok(a)),sb=new Set(tok(b));
+  if(!sa.size||!sb.size)return 0;
+  const i=[...sa].filter(w=>sb.has(w)).length;
+  return i/(sa.size+sb.size-i);
+}
+
+function dedup(arr){
+  const kept=[],dc={};
+  for(const s of arr){
+    let dup=false;
+    for(const k of kept){if(jacc(s.title,k.title)>0.42){dc[k.id]=(dc[k.id]||0)+1;dup=true;break}}
+    if(!dup)kept.push(s);
+  }
+  kept.forEach(s=>{if(dc[s.id])s.dc=dc[s.id]});
+  return kept;
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────
+function strip(h){return h.replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#\d+;/g,'').replace(/&\w+;/g,' ').replace(/\s+/g,' ').trim()}
+
+function ago(d){
+  if(!d)return'';
+  try{
+    const m=(Date.now()-new Date(d))/60000;
+    if(m<2)return'just now';
+    if(m<60)return`${Math.floor(m)}m ago`;
+    const h=Math.floor(m/60);
+    if(h<24)return`${h}h ago`;
+    return`${Math.floor(h/24)}d ago`;
+  }catch{return''}
+}
+
+// ─── FETCH FEED ───────────────────────────────────────────────────────
+async function fetchFeed(f){
+  try{
+    const r=await fetch(R2J+encodeURIComponent(f.url)+'&count=20',{signal:AbortSignal.timeout(12000)});
+    if(!r.ok)return[];
+    const d=await r.json();
+    if(d.status!=='ok'||!d.items)return[];
+    return d.items.map((it,i)=>({
+      id:`${f.src}-${i}-${Date.now()}`,
+      title:(it.title||'').replace(/\s+/g,' ').trim(),
+      summary:strip(it.description||it.content||'').slice(0,260),
+      url:it.link||it.url||'#',
+      src:f.src,
+      pub:it.pubDate||'',
+      cat:cat((it.title||'')+' '+(it.description||'')),
+      reg:f.reg||null,
+    }));
+  }catch{return[]}
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────
+let NG_STORIES=[], INTL_STORIES=[], FILTER='all', SEARCH='';
+
+// ─── RENDER NG ────────────────────────────────────────────────────────
+const ARR=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`;
+
+function renderNg(){
+  let list=NG_STORIES.filter(s=>{
+    if(FILTER!=='all'&&s.cat!==FILTER)return false;
+    const q=SEARCH.toLowerCase();
+    if(q&&!s.title.toLowerCase().includes(q)&&!s.summary.toLowerCase().includes(q))return false;
+    return true;
+  });
+  document.getElementById('ngCnt').textContent=`${list.length} ${list.length===1?'story':'stories'}`;
+  const g=document.getElementById('ngGrid');
+  if(!list.length){g.innerHTML=`<div class="empty">No stories match. Try a different filter.</div>`;return}
+  g.innerHTML=list.map((s,i)=>{
+    const top=i===0&&FILTER==='all'&&!SEARCH;
+    const t=ago(s.pub);
+    const dp=s.dc?`<span class="dbadge" title="${s.dc} similar story removed">+${s.dc} similar</span>`:'';
+    return`<article class="card${top?' top':''}" style="animation-delay:${Math.min(i*.04,.48)}s">
+      <div class="cmeta">
+        <span class="ctag">${s.cat}</span>
+        <span class="stag">${s.src}</span>
+        ${t?`<span class="ttag">${t}</span>`:''}
+      </div>
+      <h${top?'2':'3'} class="chl">${s.title}</h${top?'2':'3'}>
+      ${s.summary?`<p class="csum">${s.summary}</p>`:''}
+      <div class="cft">
+        <a class="rlink" href="${s.url}" target="_blank" rel="noopener">Full story ${ARR}</a>
+        ${dp}
+      </div>
+    </article>`;
+  }).join('');
+}
+
+// ─── RENDER INTL ──────────────────────────────────────────────────────
+function renderIntl(){
+  document.getElementById('iCnt').textContent=`${INTL_STORIES.length} stories`;
+  const el=document.getElementById('iList');
+  if(!INTL_STORIES.length){el.innerHTML=`<div class="empty" style="padding:22px">No international stories.</div>`;return}
+  el.innerHTML=INTL_STORIES.map((s,i)=>`
+    <div class="iitem" style="animation-delay:${Math.min(i*.04,.44)}s">
+      <div class="ireg">${s.reg}</div>
+      <div class="ihl">${s.title}</div>
+      ${s.summary?`<div class="isum">${s.summary}</div>`:''}
+      <div class="ift">
+        <span class="isrc">${s.src}</span>
+        <a class="rlink" href="${s.url}" target="_blank" rel="noopener" style="font-size:.57rem">Read ${ARR}</a>
+      </div>
+    </div>`).join('');
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────
+function showStats(raw,uniq){
+  const b=document.getElementById('stats');b.style.display='flex';
+  b.innerHTML=`<span class="spill"><strong>${raw}</strong> fetched</span>
+    <span class="spill"><strong>${uniq}</strong> unique</span>
+    ${raw-uniq>0?`<span class="spill"><strong>${raw-uniq}</strong> dupes filtered</span>`:''}
+    <span class="spill">Updated <strong>${new Date().toLocaleTimeString('en-NG',{timeZone:'Africa/Lagos',hour:'2-digit',minute:'2-digit'})}</strong> WAT</span>`;
+}
+
+function pg(p,m){
+  document.getElementById('pg').style.width=p+'%';
+  if(m)document.getElementById('ldMsg').textContent=m;
+}
+
+// ─── LOAD ─────────────────────────────────────────────────────────────
+async function loadAll(){
+  const btn=document.getElementById('rbtn');
+  btn.disabled=true;btn.classList.add('spin');
+  document.getElementById('ngLd').style.display='flex';
+  document.getElementById('ngGrid').innerHTML='';
+  document.getElementById('stats').style.display='none';
+  document.getElementById('err').classList.remove('on');
+  document.getElementById('iLd').style.display='flex';
+  document.getElementById('iList').innerHTML='';
+  pg(5,'Connecting to news sources…');
+
+  // NG feeds
+  const ngRes=await Promise.allSettled(NG.map(f=>fetchFeed(f)));
+  pg(50,'Processing stories…');
+  let raw=[];
+  ngRes.forEach(r=>{if(r.status==='fulfilled')raw.push(...r.value)});
+  raw.sort((a,b)=>new Date(b.pub)-new Date(a.pub));
+  const rc=raw.length;
+  NG_STORIES=dedup(raw);
+  showStats(rc,NG_STORIES.length);
+
+  // ticker
+  if(NG_STORIES.length)
+    document.getElementById('ticker').textContent=NG_STORIES.slice(0,8).map(s=>s.title).join('  ·  ');
+
+  renderNg();
+  document.getElementById('ngLd').style.display='none';
+
+  if(!raw.length){
+    const e=document.getElementById('err');
+    e.innerHTML='⚠ <strong>Could not load feeds.</strong> If you opened this file directly from disk (<code>file://</code>), your browser blocks cross-origin requests. Solutions:<br>• Open via a local web server (e.g. VS Code <em>Live Server</em> extension, or <code>python -m http.server</code>)<br>• Or upload to any web host / GitHub Pages';
+    e.classList.add('on');
+  }
+
+  pg(65,'Fetching world news…');
+
+  // INTL feeds
+  const iRes=await Promise.allSettled(INTL.map(f=>fetchFeed(f)));
+  let ri=[];
+  iRes.forEach(r=>{if(r.status==='fulfilled')ri.push(...r.value)});
+  ri.sort((a,b)=>new Date(b.pub)-new Date(a.pub));
+  INTL_STORIES=dedup(ri).slice(0,22);
+  document.getElementById('iLd').style.display='none';
+  renderIntl();
+  pg(100,'Done');
+
+  btn.disabled=false;btn.classList.remove('spin');
+}
+
+// ─── EVENTS ───────────────────────────────────────────────────────────
+document.querySelectorAll('.pill').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.pill').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');FILTER=b.dataset.cat;renderNg();
+  });
+});
+document.getElementById('srch').addEventListener('input',e=>{SEARCH=e.target.value;renderNg()});
+
+// ─── CLOCK ────────────────────────────────────────────────────────────
+function tick(){
+  document.getElementById('clock').textContent=
+    new Date().toLocaleTimeString('en-NG',{timeZone:'Africa/Lagos',hour:'2-digit',minute:'2-digit'})+' WAT';
+}
+setInterval(tick,15000);tick();
+
+// ─── BOOT ─────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
